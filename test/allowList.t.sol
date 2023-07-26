@@ -25,6 +25,7 @@ contract ContractBTest is Test {
         users = utils.createUsers(3);
 
         investXDeployer = users[0];
+
         vm.label(investXDeployer, "InvestXDeployer");
         vm.deal(investXDeployer, 3e18);
 

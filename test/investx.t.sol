@@ -3,19 +3,36 @@
 pragma solidity 0.8.11;
 
 import "forge-std/Test.sol";
+import {Utilities} from "./utils/Utilities.sol";
+import {Fusd} from "../src/contracts/InvestX/Fusd.sol";
+import {InvestX} from "../src/contracts/InvestX/InvestX.sol";
 
 contract ContractBTest is Test {
-    uint256 testNumber;
+    Fusd internal fusd;
+    InvestX internal investX;
+    Utilities internal utils;
+
+    address payable[] accounts;
+    address payable investXDeployer;
+    address payable investXPool;
 
     function setUp() public {
-        testNumber = 42;
+        utils = new Utilities();
+
+        accounts = utils.createUsers(3);
+        investXDeployer = accounts[0];
+        investXPool = accounts[1];
+
+        vm.label(investXDeployer, "investXDeployer");
+
+        vm.prank(investXDeployer);
+        fusd = new Fusd();
+
+        vm.prank(investXDeployer);
+        investX = new InvestX(address(fusd), investXPool);
     }
 
-    function test_NumberIs42() public {
-        assertEq(testNumber, 42);
-    }
+    function test_transferInvestX() public {}
 
-    function testFail_Subtract43() public {
-        testNumber -= 43;
-    }
+    function testFusdIntoInvestX() public {}
 }
