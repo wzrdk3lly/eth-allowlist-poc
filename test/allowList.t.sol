@@ -45,17 +45,24 @@ contract ContractBTest is Test {
         // initialize implementation contract
     }
 
-    // Test to register "InvestX.com"
+    /**
+     * Test to register "InvestX.com" to the allowList
+     */
     function test_RegisterInvestX() public {
         vm.prank(investXDeployer);
         allowlistRegistry.registerProtocol("InvestX.com");
+
+        string[] memory registeredProtocolList;
+        registeredProtocolList = allowlistRegistry.registeredProtocolsList();
+
+        assertEq(registeredProtocolList[0], "InvestX.com");
     }
 }
 
 /**
  * TODO
  * 1. Setup the invest X protocol. Receives token, etc
- * 2. Begin testing allowloist by adding investx to registry
+ * 2. [X] Begin testing allowloist by adding investx to registry
  * 3. Create investx implementation contract
  * 4. Set implementation
  * 5. Add condtions
