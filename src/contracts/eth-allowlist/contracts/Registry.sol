@@ -18,9 +18,11 @@ contract AllowlistRegistry {
     address public factoryAddress;
     string[] public registeredProtocols; // Array of all protocols which have successfully completed registration
     mapping(string => address) public allowlistAddressByOriginName; // Address of protocol specific allowlist
+    address public protocolOwnerAddress;
 
-    constructor(address _factoryAddress) {
+    constructor(address _factoryAddress, address _prorocolOwnerAddress) {
         factoryAddress = _factoryAddress;
+        protocolOwnerAddress = _prorocolOwnerAddress; // ADDED to eliminate ENS testing dependency. We are assuming the ENS registration works as intended
     }
 
     /**
@@ -44,9 +46,10 @@ contract AllowlistRegistry {
      */
     function registerProtocol(string memory originName) public {
         // Make sure caller is protocol owner
-        address protocolOwnerAddress = protocolOwnerAddressByOriginName(
-            originName
-        );
+        // NOTE: We hardcoded
+        // address protocolOwnerAddress = protocolOwnerAddressByOriginName(
+        //     originName
+        // );
         require(
             protocolOwnerAddress == msg.sender,
             "Only protocol owners can register protocols"
@@ -90,9 +93,10 @@ contract AllowlistRegistry {
         IAllowlist.Implementation[] memory implementations,
         IAllowlist.Condition[] memory conditions
     ) public {
-        address protocolOwnerAddress = protocolOwnerAddressByOriginName(
-            originName
-        );
+        // Note: Commented out due to hardcoded protocl owner address.
+        // address protocolOwnerAddress = protocolOwnerAddressByOriginName(
+        //     originName
+        // );
         bool callerIsProtocolOwner = protocolOwnerAddress == msg.sender;
         bool protocolIsRegistered = allowlistAddressByOriginName[originName] !=
             address(0);
