@@ -62,10 +62,10 @@ contract ContractBTest is Test {
 
 /**
  * TODO
- * 1. Setup the invest X protocol. Receives token, etc
+ * 1. [X] Setup the invest X protocol. Receives token, etc
  * 2. [X] Begin testing allowloist by adding investx to registry
  * 3. Create investx implementation contract
  * 4. Set implementation
  * 5. Add condtions
- * 6. Make a call that is not a valid one
+ * 6. Make a call that is not a valid one and show failed test
  */

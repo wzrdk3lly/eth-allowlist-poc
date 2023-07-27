@@ -11,6 +11,14 @@ The Allowlist will need to verify the following rules:
 - InvestX only allows approvals for the token FUSD
 - InvestX only allows deposits into the FUSD-Pool address
 
+### Alterations
+
+The scope of this POC is limited to the eth allowList and the fake protocol. This POC does NOT include the ENS oracle and registry contracts. There were slight alterations made to the allowlist registry to prevent having to configure and deploy an ENS oracle and ENS registry. The assumption was made that the ENS registry and ENS oracle should work as intended.
+
+The changes to support the scope of this POC include:
+
+- setting a hardcoded protocolOwnerAddress rather than making the call to ENS contracts.
+
 ### Installation
 
 When you have foundry installed, clone this repo and run `forge build`.
