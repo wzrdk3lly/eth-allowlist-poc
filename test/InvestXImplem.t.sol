@@ -16,7 +16,7 @@ contract ContractBTest is Test {
 
     address payable[] accounts;
     address payable investXDeployer;
-    address payable investXPool;
+    address payable fusdPool;
     address payable investXUser;
 
     function setUp() public {
@@ -24,7 +24,7 @@ contract ContractBTest is Test {
 
         accounts = utils.createUsers(3);
         investXDeployer = accounts[0];
-        investXPool = accounts[1];
+        fusdPool = accounts[1];
         investXUser = accounts[2];
 
         vm.label(investXDeployer, "investXDeployer");
@@ -33,12 +33,12 @@ contract ContractBTest is Test {
         fusd = new Fusd();
 
         vm.prank(investXDeployer);
-        investX = new InvestX(address(fusd), investXPool);
+        investX = new InvestX(address(fusd), fusdPool);
 
         vm.prank(investXDeployer);
         investXImplementation = new InvestXImplementation(
             address(fusd),
-            investXPool
+            address(investX)
         );
     }
 
@@ -51,22 +51,22 @@ contract ContractBTest is Test {
 
     function testFail() public {
         vm.prank(investXDeployer);
-        bool isVault = investXImplementation.isFusd(investXPool);
+        bool isVault = investXImplementation.isFusd(address(investX));
 
         assertEq(isVault, true);
     }
 
-    function test_isInvestXPool() public {
-        vm.prank(investXPool);
-        bool isInvestXPool = investXImplementation.isInvestXPool(investXPool);
+    function test_isInvestX() public {
+        vm.prank(investXDeployer);
+        bool isinvestX = investXImplementation.isInvestX(address(investX));
 
-        assertEq(isInvestXPool, true);
+        assertEq(isinvestX, true);
     }
 
-    function testFail_isInvestXPool() public {
-        vm.prank(investXPool);
-        bool isInvestXPool = investXImplementation.isInvestXPool(address(fusd));
+    function testFail_isInvestX() public {
+        vm.prank(investXDeployer);
+        bool isinvestX = investXImplementation.isInvestX(address(fusd));
 
-        assertEq(isInvestXPool, true);
+        assertEq(isinvestX, true);
     }
 }

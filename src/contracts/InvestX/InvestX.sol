@@ -14,7 +14,7 @@ contract InvestX {
 
     /**
      *
-     * @param _amountIn amount of FUSD that a user transfers into the protocol
+     * @param _amountIn amount of FUSD that a user transfers into the protocolls
      */
     function investFusd(uint256 _amountIn) public {
         fusd.transferFrom(msg.sender, fusdPool, _amountIn);

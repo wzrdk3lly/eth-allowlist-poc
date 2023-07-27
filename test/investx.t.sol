@@ -14,7 +14,7 @@ contract ContractBTest is Test {
 
     address payable[] accounts;
     address payable investXDeployer;
-    address payable investXPool;
+    address payable fusdPool;
     address payable investXUser;
 
     function setUp() public {
@@ -22,7 +22,7 @@ contract ContractBTest is Test {
 
         accounts = utils.createUsers(3);
         investXDeployer = accounts[0];
-        investXPool = accounts[1];
+        fusdPool = accounts[1];
         investXUser = accounts[2];
 
         vm.label(investXDeployer, "investXDeployer");
@@ -31,7 +31,7 @@ contract ContractBTest is Test {
         fusd = new Fusd();
 
         vm.prank(investXDeployer);
-        investX = new InvestX(address(fusd), investXPool);
+        investX = new InvestX(address(fusd), fusdPool);
     }
 
     function test_transferFusd() public {
@@ -46,16 +46,16 @@ contract ContractBTest is Test {
     }
 
     function test_investFusd() public {
-        uint256 investXPoolBefore = fusd.balanceOf(investXPool);
+        uint256 fusdPoolBefore = fusd.balanceOf(fusdPool);
 
         vm.startPrank(investXDeployer);
         fusd.approve(address(investX), 10);
         investX.investFusd(5);
         vm.stopPrank();
 
-        uint256 investXPoolAfter = fusd.balanceOf(investXPool);
+        uint256 fusdPoolAfter = fusd.balanceOf(fusdPool);
 
-        assertGt(investXPoolAfter, investXPoolBefore);
-        assertEq(investXPoolAfter, 5);
+        assertGt(fusdPoolAfter, fusdPoolBefore);
+        assertEq(fusdPoolAfter, 5);
     }
 }

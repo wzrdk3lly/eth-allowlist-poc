@@ -8,7 +8,7 @@ The objective is to create an allowlist POC for an protocol. In this scenario th
 
 The Allowlist will need to verify the following rules:
 
-- InvestX only allows approvals for the token FUSD
+- InvestX only allows approvals for the token FUSD with the spender being the investXpool ONLY
 - InvestX only allows deposits into the FUSD-Pool address
 
 ### Alterations
@@ -22,3 +22,7 @@ The changes to support the scope of this POC include:
 ### Installation
 
 When you have foundry installed, clone this repo and run `forge build`.
+
+### Tips:
+
+- The paramaters are to be the parameters of the method you select. in an approve function you have the params(spender, amount). The spender param should corelate to your deployed implementation contract. In our case we want to validate that the spender is the investX smart contract adddress.

@@ -24,16 +24,8 @@ contract ContractBTest is Test {
 
     address payable investXDeployer;
     address payable[] accounts;
-    address payable investXPool;
+    address payable fusdPool;
     address payable investXUser;
-
-    // struct Condition {
-    //     string id;
-    //     string implementationId;
-    //     string methodName;
-    //     string[] paramTypes;
-    //     string[][] requirements;
-    // }
 
     function setUp() public {
         // initialize utilities
@@ -44,7 +36,7 @@ contract ContractBTest is Test {
 
         // account[0] is the depolyer, accounts[1] is the account of the fusd-pool, acounts[2] is the user testing the implemntation
         investXDeployer = accounts[0];
-        investXPool = accounts[1];
+        fusdPool = accounts[1];
         investXUser = accounts[2];
 
         vm.label(investXDeployer, "InvestXDeployer");
@@ -54,13 +46,13 @@ contract ContractBTest is Test {
         fusd = new Fusd();
 
         vm.prank(investXDeployer);
-        investX = new InvestX(address(fusd), investXPool);
+        investX = new InvestX(address(fusd), fusdPool);
 
         // initialize the implementation contract
         vm.prank(investXDeployer);
         investXImplementation = new InvestXImplementation(
             address(fusd),
-            investXPool
+            address(investX)
         );
 
         // deploy the allow list template address
@@ -129,17 +121,22 @@ contract ContractBTest is Test {
         investXCondition.paramTypes = new string[](2);
         investXCondition.paramTypes[0] = "address";
         investXCondition.paramTypes[1] = "uint256";
-        investXCondition.requirements = new string[][](2);
+        investXCondition.requirements = new string[][](2); // change (1) -> (2) if you need to use the param checks
         investXCondition.requirements[0] = new string[](2);
         investXCondition.requirements[0][0] = "target";
         investXCondition.requirements[0][1] = "isFusd";
-        // //Note May need to remove the bottom parameters. unsure if this will even target the investxPool since it's an approval message
-        // investXCondition.requirements[1][0] = "param";
-        // investXCondition.requirements[1][1] = "isInvestXPool";
-        // investXCondition.requirements[1][2] = "0";
 
-        // (["param", "isInvestXPool", "0"]);
+        // //TODO: configure for depositing into the right address
+        investXCondition.requirements[1] = new string[](3);
+        investXCondition.requirements[1][0] = "param";
+        investXCondition.requirements[1][1] = "isInvestX";
+        investXCondition.requirements[1][2] = "0";
+
         investXallowList.addCondition(investXCondition);
+
+        uint256 conditionsLength = investXallowList.conditionsLength();
+
+        assertEq(conditionsLength, 1);
     }
 }
 
@@ -148,7 +145,7 @@ contract ContractBTest is Test {
  * 1. [X] Setup the invest X protocol. Receives token, etc
  * 2. [X] Begin testing allowloist by adding investx to registry
  * 3. [x] Create investx implementation contract
- * 4. Set implementation
- * 5. Add condtions
+ * 4. [x] Set implementation
+ * 5. [X] Add condtions
  * 6. Make a call that is not a valid one and show failed test
  */
