@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.11;
-import "./libraries/EnsHelper.sol";
+// import "./libraries/EnsHelper.sol";
 import "./libraries/CalldataValidation.sol";
 import "../../eth-allowlist/interfaces/IAllowlist.sol";
 
@@ -30,11 +30,11 @@ contract AllowlistRegistry {
      * @param originName is the domain name for a protocol (ie. "yearn.finance")
      * @return ownerAddress Returns the address of the domain controller if the domain is registered on ENS
      */
-    function protocolOwnerAddressByOriginName(
-        string memory originName
-    ) public view returns (address ownerAddress) {
-        ownerAddress = EnsHelper.ownerAddressByName(originName);
-    }
+    // function protocolOwnerAddressByOriginName(
+    //     string memory originName
+    // ) public view returns (address ownerAddress) {
+    //     ownerAddress = EnsHelper.ownerAddressByName(originName);
+    // }
 
     /**
      * @notice Begin protocol registration
