@@ -18,6 +18,7 @@ contract ContractBTest is Test {
     Allowlist internal allowlistTemplate;
     AllowlistFactory internal allowListFactory;
     AllowlistRegistry internal allowlistRegistry;
+    AllowlistRegistry internal allowListRegistryTest;
     Fusd internal fusd;
     InvestX internal investX;
     InvestXImplementation internal investXImplementation;
@@ -26,18 +27,20 @@ contract ContractBTest is Test {
     address payable[] accounts;
     address payable fusdPool;
     address payable investXUser;
+    address payable dnsSpoofer;
 
     function setUp() public {
         // initialize utilities
         utils = new Utilities();
 
         // custom utility to create new accounts
-        accounts = utils.createUsers(3);
+        accounts = utils.createUsers(4);
 
         // account[0] is the depolyer, accounts[1] is the account of the fusd-pool, acounts[2] is the user testing the implemntation
         investXDeployer = accounts[0];
         fusdPool = accounts[1];
         investXUser = accounts[2];
+        dnsSpoofer = accounts[3];
 
         vm.label(investXDeployer, "InvestXDeployer");
         vm.deal(investXDeployer, 3e18);
@@ -137,6 +140,116 @@ contract ContractBTest is Test {
         uint256 conditionsLength = investXallowList.conditionsLength();
 
         assertEq(conditionsLength, 1);
+    }
+
+    function test_validateCalldata() public {
+        // investXDeployer can be the only one to interact with their allowList
+        vm.startPrank(investXDeployer);
+        allowlistRegistry.registerProtocol("InvestX.com");
+
+        Allowlist investXallowList = Allowlist(
+            allowlistRegistry.allowlistAddressByOriginName("InvestX.com")
+        );
+
+        investXallowList.setImplementation(
+            "INVESTX_IMPLEMENTATION",
+            address(investXImplementation)
+        );
+
+        IAllowlist.Condition memory investXCondition;
+
+        // SEE https://ethereum.stackexchange.com/questions/130480/why-am-i-getting-index-out-of-bounds-here if you need to undertand the below
+
+        // Method labeling and method selector requirmeents
+        investXCondition.id = "TOKEN_APPROVE_INVESTX";
+        investXCondition.implementationId = "INVESTX_IMPLEMENTATION";
+        investXCondition.methodName = "approve";
+        investXCondition.paramTypes = new string[](2);
+        investXCondition.paramTypes[0] = "address";
+        investXCondition.paramTypes[1] = "uint256";
+
+        // Target requirments
+        investXCondition.requirements = new string[][](2); // change (1) -> (2) if you need to use the param checks
+        investXCondition.requirements[0] = new string[](2);
+        investXCondition.requirements[0][0] = "target";
+        investXCondition.requirements[0][1] = "isFusd";
+        // Param requirements
+        investXCondition.requirements[1] = new string[](3);
+        investXCondition.requirements[1][0] = "param";
+        investXCondition.requirements[1][1] = "isInvestX";
+        investXCondition.requirements[1][2] = "0";
+
+        investXallowList.addCondition(investXCondition);
+
+        // generate calldata data for an approve function;
+        bytes memory data = abi.encodeWithSignature(
+            "approve(address,uint256)",
+            address(investX),
+            20
+        );
+
+        bool isValid = allowlistRegistry.validateCalldataByOrigin(
+            "InvestX.com",
+            address(fusd),
+            data
+        );
+
+        assertEq(isValid, true);
+    }
+
+    //function testFail_validateMaliciousCalldata
+    function test_rejectMaliciousCalldata() public {
+        // investXDeployer can be the only one to interact with their allowList
+        vm.startPrank(investXDeployer);
+        allowlistRegistry.registerProtocol("InvestX.com");
+
+        Allowlist investXallowList = Allowlist(
+            allowlistRegistry.allowlistAddressByOriginName("InvestX.com")
+        );
+
+        investXallowList.setImplementation(
+            "INVESTX_IMPLEMENTATION",
+            address(investXImplementation)
+        );
+
+        IAllowlist.Condition memory investXCondition;
+
+        // SEE https://ethereum.stackexchange.com/questions/130480/why-am-i-getting-index-out-of-bounds-here if you need to undertand the below
+
+        // Method labeling and method selector requirmeents
+        investXCondition.id = "TOKEN_APPROVE_INVESTX";
+        investXCondition.implementationId = "INVESTX_IMPLEMENTATION";
+        investXCondition.methodName = "approve";
+        investXCondition.paramTypes = new string[](2);
+        investXCondition.paramTypes[0] = "address";
+        investXCondition.paramTypes[1] = "uint256";
+        // Target requirments
+        investXCondition.requirements = new string[][](2); // change (1) -> (2) if you need to use the param checks
+        investXCondition.requirements[0] = new string[](2);
+        investXCondition.requirements[0][0] = "target";
+        investXCondition.requirements[0][1] = "isFusd";
+        // Param requirements
+        investXCondition.requirements[1] = new string[](3);
+        investXCondition.requirements[1][0] = "param";
+        investXCondition.requirements[1][1] = "isInvestX";
+        investXCondition.requirements[1][2] = "0";
+
+        investXallowList.addCondition(investXCondition);
+
+        // generate malicious calldata data with an attempt to give an attacker spender approval instead of the exchanges
+        bytes memory data = abi.encodeWithSignature(
+            "approve(address,uint256)",
+            dnsSpoofer, //Should fail isInvestX check
+            20
+        );
+
+        bool isValid = allowlistRegistry.validateCalldataByOrigin(
+            "InvestX.com",
+            address(fusd),
+            data
+        );
+
+        assertEq(isValid, false);
     }
 }
 

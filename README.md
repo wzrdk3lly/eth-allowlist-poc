@@ -38,7 +38,3 @@ The changes to support the scope of this POC include:
 When you have foundry installed, clone this repo and run `forge build`.
 
 run this commnand `forge test --match-path path/to/test/file`. EX: forge test `forge test --match-path test/allowList.t.sol`
-
-### Tips:
-
-- The paramaters are to be the parameters of the method you select. in an approve function you have the params(spender, amount). The spender param should corelate to your deployed implementation contract. In our case we want to validate that the spender is the investX smart contract adddress.
