@@ -1,15 +1,10 @@
 ### Overview
 
-This repository is a WIP of an POC for the ETH allowlist implementation, originally created by the yearn team.
+This repository is a WIP of an POC for the ETH allowlist implementation, originally created by the yearn team. See [ yearn's README.md](/src/contracts/eth-allowlist/README.md) for details on the allow list. At a high level the eth-allowlist implementation helps mitigate DNS spoofing and man in the middle attacks by validating calldata that a protocol owner has allowListed.
 
 ### Objective
 
-The objective is to create an allowlist POC for an fake protocol. In this scenario the fake protocol will be called InvestX. It is a simple dapp, that accepts Fake usd (FUSD) and deposits these tokens into a pool.
-
-The Allowlist will need to verify the following rules:
-
-- InvestX only allows approvals for the token FUSD with the spender being the investXpool ONLY
-- InvestX only allows deposits into the FUSD-Pool address
+The objective is to create an allowlist POC for an fake protocol. In this scenario the fake protocol will be called InvestX. It is a simple dapp, that accepts Fake usd (FUSD) and deposits these tokens into a pool. We will be creating an allowList implementation that prevents malicous calls from beng made to the InvestX dapp. One key thing to note is that, direct smart contract calls are not prevented. This functionality is to be applied to API calls and wallet integration calls.
 
 ### Navigating this Repo
 
