@@ -21,7 +21,7 @@ contract AllowlistRegistry {
     address public protocolOwnerAddress;
     mapping(address => uint256) public reregisterTimestampByAddress; // timestamp of timelock mapped to  protocolOwnerAddress
 
-    uint256 public MAX_TIME_DELAY = 86400;
+    uint256 public MAX_TIME_DELAY = 1 days; // 86400
 
     constructor(address _factoryAddress, address _prorocolOwnerAddress) {
         factoryAddress = _factoryAddress;
