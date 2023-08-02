@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.11;
+pragma solidity 0.8.20;
 // import "./libraries/EnsHelper.sol";
 import "./libraries/CalldataValidation.sol";
 import "../../eth-allowlist/interfaces/IAllowlist.sol";
@@ -109,7 +109,6 @@ contract AllowlistRegistry {
         return reregisterTimestampByAddress[protocolOwnerAddress];
     }
 
-    // initiate re-register
     /**
      * @notice Allow protocol owners to override and replace existing allowlist
      * @dev This method is destructive and cannot be undone
@@ -122,7 +121,7 @@ contract AllowlistRegistry {
         string memory originName,
         IAllowlist.Implementation[] memory implementations,
         IAllowlist.Condition[] memory conditions
-    ) public returns (uint256) {
+    ) public {
         // Note: Commented out due to hardcoded protocl owner address.
         // address protocolOwnerAddress = protocolOwnerAddressByOriginName(
         //     originName

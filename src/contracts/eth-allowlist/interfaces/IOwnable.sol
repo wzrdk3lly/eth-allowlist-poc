@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.11;
+pragma solidity 0.8.20;
 
 interface IOwnable {
-  function setOwnerAddress(address _ownerAddress) external;
+    function setOwnerAddress(address _ownerAddress) external;
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.11;
+pragma solidity >=0.8.0;
 
 import "forge-std/Test.sol";
 import {Utilities} from "./utils/Utilities.sol";
@@ -147,6 +147,9 @@ contract ContractBTest is Test {
         assertEq(conditionsLength, 1);
     }
 
+    /**
+     * Test showing a success when valdating calldata with the allowList
+     */
     function test_validateCalldata() public {
         // investXDeployer can be the only one to interact with their allowList
         vm.startPrank(investXDeployer);
@@ -162,8 +165,6 @@ contract ContractBTest is Test {
         );
 
         IAllowlist.Condition memory investXCondition;
-
-        // SEE https://ethereum.stackexchange.com/questions/130480/why-am-i-getting-index-out-of-bounds-here if you need to undertand the below
 
         // Method labeling and method selector requirmeents
         investXCondition.id = "TOKEN_APPROVE_INVESTX";
@@ -221,8 +222,6 @@ contract ContractBTest is Test {
 
         IAllowlist.Condition memory investXCondition;
 
-        // SEE https://ethereum.stackexchange.com/questions/130480/why-am-i-getting-index-out-of-bounds-here if you need to undertand the below
-
         // Method labeling and method selector requirmeents
         investXCondition.id = "TOKEN_APPROVE_INVESTX";
         investXCondition.implementationId = "INVESTX_IMPLEMENTATION";
@@ -278,8 +277,6 @@ contract ContractBTest is Test {
 
         IAllowlist.Condition memory investXCondition;
 
-        // SEE https://ethereum.stackexchange.com/questions/130480/why-am-i-getting-index-out-of-bounds-here if you need to undertand the below
-
         // Method labeling and method selector requirmeents
         investXCondition.id = "TOKEN_APPROVE_INVESTX";
         investXCondition.implementationId = "INVESTX_IMPLEMENTATION";
@@ -316,9 +313,9 @@ contract ContractBTest is Test {
         assertEq(isValid, false);
     }
 
-    // function test where the spoofer attempts to call transfer from or any method that insn't approve
-
-    // play around with timelock.sol
+    /**
+     * Reregister a protocol succesfully passing the timelock of a day
+     */
     function test_Reregister() public {
         // Sets the block.timestamp to be 2 days in seconds
         vm.warp(2 days);
@@ -388,6 +385,9 @@ contract ContractBTest is Test {
         );
     }
 
+    /**
+     * Revert when we attempt to reregister before the timelock finishes
+     */
     function test_RevertWhenReregisterBeforeTimelockFinish() public {
         vm.warp(block.timestamp + 2 days);
         // Perform intiial registration
