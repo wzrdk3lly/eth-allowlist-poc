@@ -202,7 +202,9 @@ contract ContractBTest is Test {
         assertEq(isValid, true);
     }
 
-    //function testFail_validateMaliciousCalldata
+    /**
+     * Test that calldata with malicous parameters are rejected
+     */
     function test_RejectMaliciousParamInCalldata() public {
         // investXDeployer can be the only one to interact with their allowList
         vm.startPrank(investXDeployer);
@@ -257,6 +259,9 @@ contract ContractBTest is Test {
         assertEq(isValid, false);
     }
 
+    /**
+     * Test that returns false when calldata contains method not on allowList
+     */
     function test_RejectMaliciousMethodInCalldata() public {
         // investXDeployer can be the only one to interact with their allowList
         vm.startPrank(investXDeployer);
