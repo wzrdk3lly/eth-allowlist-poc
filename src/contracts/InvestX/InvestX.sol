@@ -18,5 +18,6 @@ contract InvestX {
      */
     function investFusd(uint256 _amountIn) public {
         fusd.transferFrom(msg.sender, fusdPool, _amountIn);
+        // Assum this is a real protocol and more things happen to the Pool
     }
 }

@@ -19,6 +19,9 @@ contract AllowlistRegistry {
     string[] public registeredProtocols; // Array of all protocols which have successfully completed registration
     mapping(string => address) public allowlistAddressByOriginName; // Address of protocol specific allowlist
     address public protocolOwnerAddress;
+    mapping(address => uint256) public reregisterTimestampByAddress; // timestamp of timelock mapped to  protocolOwnerAddress
+
+    uint256 public MAX_TIME_DELAY = 86400;
 
     constructor(address _factoryAddress, address _prorocolOwnerAddress) {
         factoryAddress = _factoryAddress;
@@ -81,6 +84,33 @@ contract AllowlistRegistry {
     }
 
     /**
+     *
+     * @param originName domain name of the protocol to reregister an allowList
+     */
+
+    function initializeReregister(
+        string memory originName
+    ) public returns (uint256) {
+        bool callerIsProtocolOwner = protocolOwnerAddress == msg.sender;
+        bool protocolIsRegistered = allowlistAddressByOriginName[originName] !=
+            address(0);
+
+        // Only owner can re-register
+        require(
+            callerIsProtocolOwner,
+            "Only protocol owners can replace their allowlist with a new allowlist"
+        );
+
+        // Only registered protocols can re-register
+        require(protocolIsRegistered, "Protocol is not yet registered");
+
+        // set the timestampe of the protocol
+        reregisterTimestampByAddress[protocolOwnerAddress] = block.timestamp;
+        return reregisterTimestampByAddress[protocolOwnerAddress];
+    }
+
+    // initiate re-register
+    /**
      * @notice Allow protocol owners to override and replace existing allowlist
      * @dev This method is destructive and cannot be undone
      * @dev Protocols can only re-register if they have already registered once
@@ -92,7 +122,7 @@ contract AllowlistRegistry {
         string memory originName,
         IAllowlist.Implementation[] memory implementations,
         IAllowlist.Condition[] memory conditions
-    ) public {
+    ) public returns (uint256) {
         // Note: Commented out due to hardcoded protocl owner address.
         // address protocolOwnerAddress = protocolOwnerAddressByOriginName(
         //     originName
@@ -107,9 +137,28 @@ contract AllowlistRegistry {
             "Only protocol owners can replace their allowlist with a new allowlist"
         );
 
+        // create a req that registrant timelock has surpassed a day
+
         // Only registered protocols can re-register
         require(protocolIsRegistered, "Protocol is not yet registered");
 
+        // Protocol needs to have initialized a reregistration
+        require(
+            reregisterTimestampByAddress[protocolOwnerAddress] > 0,
+            "Protocol reregister never initialized"
+        );
+
+        // registered protocols after 1 day delay can re-register
+        require(
+            block.timestamp -
+                reregisterTimestampByAddress[protocolOwnerAddress] >
+                MAX_TIME_DELAY,
+            "Timelock not finished"
+        );
+
+        // uint256 reregisterStamp = reregisterTimestampByAddress[
+        //     protocolOwnerAddress
+        // ];
         // Delete existing allowlist
         delete allowlistAddressByOriginName[originName];
 
@@ -128,6 +177,9 @@ contract AllowlistRegistry {
         // Add conditions to new allowlist
         allowlist.addConditions(conditions);
         IAllowlist(allowlist).setOwnerAddress(protocolOwnerAddress);
+
+        // Reset Timelock
+        delete reregisterTimestampByAddress[protocolOwnerAddress];
     }
 
     /**

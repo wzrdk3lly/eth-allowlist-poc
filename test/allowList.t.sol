@@ -37,7 +37,7 @@ contract ContractBTest is Test {
         accounts = utils.createUsers(4);
 
         // account[0] is the depolyer, accounts[1] is the account of the fusd-pool, acounts[2] is the user testing the implemntation
-        investXDeployer = accounts[0];
+        investXDeployer = accounts[0]; // "0x123"
         fusdPool = accounts[1];
         investXUser = accounts[2];
         dnsSpoofer = accounts[3];
@@ -84,6 +84,9 @@ contract ContractBTest is Test {
         assertEq(registeredProtocolList[0], "InvestX.com");
     }
 
+    /**
+     * Set's the impelmentation contract within the allowList for the investX protocol
+     */
     function test_setImplementation() public {
         // investXDeployer can be the only one to interact with their allowList
         vm.startPrank(investXDeployer);
@@ -99,6 +102,9 @@ contract ContractBTest is Test {
         );
     }
 
+    /**
+     * Add token approval condition
+     */
     function test_addCondition() public {
         // investXDeployer can be the only one to interact with their allowList
         vm.startPrank(investXDeployer);
@@ -129,7 +135,6 @@ contract ContractBTest is Test {
         investXCondition.requirements[0][0] = "target";
         investXCondition.requirements[0][1] = "isFusd";
 
-        // //TODO: configure for depositing into the right address
         investXCondition.requirements[1] = new string[](3);
         investXCondition.requirements[1][0] = "param";
         investXCondition.requirements[1][1] = "isInvestX";
@@ -251,14 +256,134 @@ contract ContractBTest is Test {
 
         assertEq(isValid, false);
     }
-}
 
-/**
- * TODO
- * 1. [X] Setup the invest X protocol. Receives token, etc
- * 2. [X] Begin testing allowloist by adding investx to registry
- * 3. [x] Create investx implementation contract
- * 4. [x] Set implementation
- * 5. [X] Add condtions
- * 6. Make a call that is not a valid one and show failed test
- */
+    // function test where the spoofer attempts to call transfer from or any method that insn't approve
+
+    // play around with timelock.sol
+    function test_Reregister() public {
+        // Sets the block.timestamp to be 2 days in seconds
+        vm.warp(2 days);
+
+        // Perform intiial registration
+        vm.startPrank(investXDeployer);
+        allowlistRegistry.registerProtocol("InvestX.com");
+
+        allowlistRegistry.initializeReregister("InvestX.com");
+        uint256 blocktimeStampB4Warp = allowlistRegistry
+            .reregisterTimestampByAddress(address(investXDeployer));
+
+        console2.log("The timestamp before warp is:", blocktimeStampB4Warp);
+
+        // represents waiting a full day since initiating a reregisration plus an extra second
+        vm.warp(3 days + 1);
+
+        uint256 blocktimeStampAfterWarp = block.timestamp;
+
+        console2.log("The timestamp after warp is:", blocktimeStampAfterWarp);
+
+        // create a condition array of 1
+
+        IAllowlist.Condition[]
+            memory arrayOfConditions = new IAllowlist.Condition[](1);
+        // Create a condition to be added to the new allowList
+        IAllowlist.Condition memory investXCondition;
+
+        // Method labeling and method selector requirmeents
+        investXCondition.id = "TOKEN_APPROVE_INVESTX";
+        investXCondition.implementationId = "INVESTX_IMPLEMENTATION";
+        investXCondition.methodName = "approve";
+        investXCondition.paramTypes = new string[](2);
+        investXCondition.paramTypes[0] = "address";
+        investXCondition.paramTypes[1] = "uint256";
+
+        // Target requirments
+        investXCondition.requirements = new string[][](2); // change (1) -> (2) if you need to use the param checks
+        investXCondition.requirements[0] = new string[](2);
+        investXCondition.requirements[0][0] = "target";
+        investXCondition.requirements[0][1] = "isFusd";
+        // Param requirements
+        investXCondition.requirements[1] = new string[](3);
+        investXCondition.requirements[1][0] = "param";
+        investXCondition.requirements[1][1] = "isInvestX";
+        investXCondition.requirements[1][2] = "0";
+
+        arrayOfConditions[0] = investXCondition;
+
+        // create an implementation array of 1
+        IAllowlist.Implementation[]
+            memory arrayOfImplementations = new IAllowlist.Implementation[](1);
+
+        // create an implementation to be addedto the implemnetation array
+        IAllowlist.Implementation memory investXImplementation1 = IAllowlist
+            .Implementation(
+                "INVESTX_IMPLEMENTATION",
+                address(investXImplementation)
+            );
+
+        arrayOfImplementations[0] = investXImplementation1;
+
+        allowlistRegistry.reregisterProtocol(
+            "InvestX.com",
+            arrayOfImplementations,
+            arrayOfConditions
+        );
+    }
+
+    function test_RevertWhenReregisterBeforeTimelockFinish() public {
+        vm.warp(block.timestamp + 2 days);
+        // Perform intiial registration
+        vm.startPrank(investXDeployer);
+        allowlistRegistry.registerProtocol("InvestX.com");
+
+        allowlistRegistry.initializeReregister("InvestX.com");
+
+        // create a condition array of 1
+
+        IAllowlist.Condition[]
+            memory arrayOfConditions = new IAllowlist.Condition[](1);
+        // Create a condition to be added to the new allowList
+        IAllowlist.Condition memory investXCondition;
+
+        // Method labeling and method selector requirmeents
+        investXCondition.id = "TOKEN_APPROVE_INVESTX";
+        investXCondition.implementationId = "INVESTX_IMPLEMENTATION";
+        investXCondition.methodName = "approve";
+        investXCondition.paramTypes = new string[](2);
+        investXCondition.paramTypes[0] = "address";
+        investXCondition.paramTypes[1] = "uint256";
+
+        // Target requirments
+        investXCondition.requirements = new string[][](2); // change (1) -> (2) if you need to use the param checks
+        investXCondition.requirements[0] = new string[](2);
+        investXCondition.requirements[0][0] = "target";
+        investXCondition.requirements[0][1] = "isFusd";
+        // Param requirements
+        investXCondition.requirements[1] = new string[](3);
+        investXCondition.requirements[1][0] = "param";
+        investXCondition.requirements[1][1] = "isInvestX";
+        investXCondition.requirements[1][2] = "0";
+
+        arrayOfConditions[0] = investXCondition;
+
+        // create an implementation array of 1
+        IAllowlist.Implementation[]
+            memory arrayOfImplementations = new IAllowlist.Implementation[](1);
+
+        // create an implementation to be addedto the implemnetation array
+        IAllowlist.Implementation memory investXImplementation1 = IAllowlist
+            .Implementation(
+                "INVESTX_IMPLEMENTATION",
+                address(investXImplementation)
+            );
+
+        arrayOfImplementations[0] = investXImplementation1;
+
+        // expecting this call to fail due to timelock not finishing
+        vm.expectRevert(bytes("Timelock not finished"));
+        allowlistRegistry.reregisterProtocol(
+            "InvestX.com",
+            arrayOfImplementations,
+            arrayOfConditions
+        );
+    }
+}
