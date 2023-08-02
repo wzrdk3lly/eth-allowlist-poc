@@ -203,7 +203,7 @@ contract ContractBTest is Test {
     }
 
     //function testFail_validateMaliciousCalldata
-    function test_rejectMaliciousCalldata() public {
+    function test_RejectMaliciousParamInCalldata() public {
         // investXDeployer can be the only one to interact with their allowList
         vm.startPrank(investXDeployer);
         allowlistRegistry.registerProtocol("InvestX.com");
@@ -244,6 +244,60 @@ contract ContractBTest is Test {
         // generate malicious calldata data with an attempt to give an attacker spender approval instead of the exchanges
         bytes memory data = abi.encodeWithSignature(
             "approve(address,uint256)",
+            dnsSpoofer, //Should fail isInvestX check
+            20
+        );
+
+        bool isValid = allowlistRegistry.validateCalldataByOrigin(
+            "InvestX.com",
+            address(fusd),
+            data
+        );
+
+        assertEq(isValid, false);
+    }
+
+    function test_RejectMaliciousMethodInCalldata() public {
+        // investXDeployer can be the only one to interact with their allowList
+        vm.startPrank(investXDeployer);
+        allowlistRegistry.registerProtocol("InvestX.com");
+
+        Allowlist investXallowList = Allowlist(
+            allowlistRegistry.allowlistAddressByOriginName("InvestX.com")
+        );
+
+        investXallowList.setImplementation(
+            "INVESTX_IMPLEMENTATION",
+            address(investXImplementation)
+        );
+
+        IAllowlist.Condition memory investXCondition;
+
+        // SEE https://ethereum.stackexchange.com/questions/130480/why-am-i-getting-index-out-of-bounds-here if you need to undertand the below
+
+        // Method labeling and method selector requirmeents
+        investXCondition.id = "TOKEN_APPROVE_INVESTX";
+        investXCondition.implementationId = "INVESTX_IMPLEMENTATION";
+        investXCondition.methodName = "approve";
+        investXCondition.paramTypes = new string[](2);
+        investXCondition.paramTypes[0] = "address";
+        investXCondition.paramTypes[1] = "uint256";
+        // Target requirments
+        investXCondition.requirements = new string[][](2); // change (1) -> (2) if you need to use the param checks
+        investXCondition.requirements[0] = new string[](2);
+        investXCondition.requirements[0][0] = "target";
+        investXCondition.requirements[0][1] = "isFusd";
+        // Param requirements
+        investXCondition.requirements[1] = new string[](3);
+        investXCondition.requirements[1][0] = "param";
+        investXCondition.requirements[1][1] = "isInvestX";
+        investXCondition.requirements[1][2] = "0";
+
+        investXallowList.addCondition(investXCondition);
+
+        // generate malicious calldata data with an attempt to give an attacker spender approval instead of the exchanges
+        bytes memory data = abi.encodeWithSignature(
+            "transfer(address,uint256)",
             dnsSpoofer, //Should fail isInvestX check
             20
         );
