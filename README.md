@@ -1,6 +1,6 @@
 ### Overview
 
-This repository is a WIP of an POC for the ETH allowlist implementation, originally created by the yearn team. See [ yearn's README.md](/src/contracts/eth-allowlist/README.md) for details on the allow list. At a high level the eth-allowlist implementation helps mitigate DNS spoofing and man in the middle attacks by validating calldata that a protocol owner has allowListed.
+This repository is a foundry POC for the ETH allowlist implementation, originally created by the yearn team. See [ yearn's README.md](/src/contracts/eth-allowlist/README.md) for details on the allow list. At a high level the eth-allowlist implementation helps mitigate DNS spoofing and man in the middle attacks by validating calldata that a protocol owner has allowListed.
 
 ### Objective
 
@@ -26,7 +26,8 @@ The scope of this POC is limited to the eth allowList and the fake protocol. Thi
 
 The changes to support the scope of this POC include:
 
-- setting a hardcoded protocolOwnerAddress rather than making the call to ENS contracts.
+- Setting a hardcoded protocolOwnerAddress rather than making the call to the ENS Oracle contracts.
+- Implementing a timelock ability for reregistering protocols. This will help mitigate protocol takeovers and attackers who attempt to create a new allowList implementation.
 
 ### Installation
 

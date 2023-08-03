@@ -318,7 +318,7 @@ contract ContractBTest is Test {
      */
     function test_Reregister() public {
         // Sets the block.timestamp to be 2 days in seconds
-        vm.warp(2 days);
+        vm.warp(2 days); //Day 2
 
         // Perform intiial registration
         vm.startPrank(investXDeployer);
@@ -331,7 +331,7 @@ contract ContractBTest is Test {
         console2.log("The timestamp before warp is:", blocktimeStampB4Warp);
 
         // represents waiting a full day since initiating a reregisration plus an extra second
-        vm.warp(3 days + 1);
+        vm.warp(3 days + 1); //Day 3
 
         uint256 blocktimeStampAfterWarp = block.timestamp;
 
@@ -389,7 +389,7 @@ contract ContractBTest is Test {
      * Revert when we attempt to reregister before the timelock finishes
      */
     function test_RevertWhenReregisterBeforeTimelockFinish() public {
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(2 days);
         // Perform intiial registration
         vm.startPrank(investXDeployer);
         allowlistRegistry.registerProtocol("InvestX.com");
