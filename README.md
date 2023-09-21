@@ -34,3 +34,183 @@ The changes to support the scope of this POC include:
 When you have foundry installed, clone this repo and run `forge build`.
 
 run this commnand `forge test --match-path path/to/test/file`. EX: forge test `forge test --match-path test/allowList.t.sol`
+
+Create developer documentation that includes good descriptions and pictures on how to correctly configure an allow list for their Dapp.
+
+### AllowList Developer Docs
+
+In the past 3 years alone, $150M+ has been extracted due to DNS hijacking and malicious content injection. A solution created by the Yearn team, and supported by the MetaMask team involves creating an onchain calldata AllowList that prevents malicious actors from damaging crypto users in the event of a DNS hijack. In this write-up we have detailed step by step instructions on how this allowList can be implemented.
+
+### AllowList Overview
+
+DNSSEC also known as DNS Security Extensions was designed to protect clients from attack vectors such as cache poisoning, DNS spoofing, etc. When you enable DNSSEC, there is a cryptographic signature generated for your DNS record. When the DNS record is queried, the resolver validates the signature with the DNS, hence preventing MITM attacks and spoofing.
+
+ENS offers the ability to register your DNSSEC on chain to an ENS Oracle. With this onchain representation of a DNS domain, we can generate an AllowList of calldata that this dapp is willing to allow. In the event that a protocol’s DNS has been hijacked, malicious smart contract calls to the protocol’s domain can be flagged or blocked by \*Metamask.
+
+The yearn finance team has prototyped an allow list implementation to ensure that their smart contracts are not vulnerable to MITM attacks. We are going to look at how this implementation works in detail and walk through the steps needed to implement your own allowList.
+
+At a high level we need 4 key things for this implementation:
+
+1. A domain’s DNSSEC signatures
+2. Specific calldata that a protocol is designed to send
+3. An allowList registry that stores this calldata
+4. A \*Metamask integration that checks the allow list registry of the protocol the call originated from.
+
+\*Disclaimer, this feature is not yet incorporated into MetaMask. It’s a potential solution that can be implemented in the future.
+
+When we have these 4 components we can create an allowList for our smart contracts.
+
+Lets take a scenario where a website is spoofed and it redirects a user to a scam website with malicious smart contracts. The user interacts with a malicious smart contract which will likely drain their wallet. The user believes they are interacting with a trusted website, but it has been spoofed/hijacked.
+
+With the proposed allowList implementation, MetaMask can block or deny transactions made to domains that have a registered allowList. MetaMask will be able to cross reference the origin’s domain name with the allow list registry and verify whether the calldata is allowed or not.
+
+To implement this control within your smart contracts, there are a few pre-requisites you need before following this guide:
+
+_You need to use or switch to a hosting provider that allows you to enable DNSSEC for your protocol Domain_
+
+Once you have this prerequisites, you are ready to implement your own allow list.
+
+### Step 1: Register your DNSSEC hash with the DNS Registrar
+
+Follow the [DNS Registrar guide](https://docs.ens.domains/dns-registrar-guide) in order to understand how to:
+
+1. Enable DNSSEC
+2. Register your ENS Domain
+3. Register the DNSSEC hash to the DNSSEC Oracle smart contract
+
+### Step 2: Register your protocol to the AllowList registry
+
+First you need to register your protocol using the address that has control of your ENS Domain. You can do this by calling [registerProtocol() function](https://github.com/yearn/eth-allowlist/blob/fcb2c52439a3311cc7b95985387ccd29d734ede7/contracts/Registry.sol#L47C1-L73) on the [allow list registry contract](https://etherscan.io/address/0xb39c4EF6c7602f1888E3f3347f63F26c158c0336).
+
+An allowlist will be initialized for your protocol
+
+It’s important to understand that you MUST make this call using the private keys that control your ens domain.
+
+See below for a snippet of the registerProtocol function
+
+```solidity
+/**
+   * @notice Begin protocol registration
+   * @param originName is the domain name for a protocol (ie. "yearn.finance")
+   * @dev Only valid protocol owners can begin registration
+   * @dev Beginning registration generates a smart contract each protocol can use
+   *      to manage their conditions and validation implementation logic
+   * @dev Only fully registered protocols appear on the registration list
+   */
+  function registerProtocol(string memory originName) public {
+    // Make sure caller is protocol owner
+    address protocolOwnerAddress = protocolOwnerAddressByOriginName(originName);
+    require(
+      protocolOwnerAddress == msg.sender,
+      "Only protocol owners can register protocols"
+    );
+
+    // Make sure protocol is not already registered
+    bool protocolIsAlreadyRegistered = allowlistAddressByOriginName[
+      originName
+    ] != address(0);
+    require(
+      protocolIsAlreadyRegistered == false,
+      "Protocol is already registered"
+    );
+
+    // Clone, register and initialize allowlist
+    address allowlistAddress = IAllowlistFactory(factoryAddress).cloneAllowlist(
+      originName,
+      protocolOwnerAddress
+    );
+    allowlistAddressByOriginName[originName] = allowlistAddress;
+
+    // Register protocol
+    registeredProtocols.push(originName);
+  }
+```
+
+### Step 3: Deploy Custom Implementation Contracts to validate targets and parameters against
+
+Now that you have began the registration for your protocol, you will need to create custom integration contracts depending on the logic of your protocol’s smart contracts.
+
+See Yearn’s [custom implementation contracts](https://github.com/yearn/yearn-allowlist/tree/main/contracts/implementations) for reference.
+
+### Step 4: Link the allowlist with your custom implementation contract
+
+To link your allowlist with your custom implementation contracts, you will need to call the `setImplementation(string,address)` function.
+
+```solidity
+function setImplementation(
+    string memory implementationId,
+    address implementationAddress
+  ) public onlyOwner {
+    // Add implementation ID to the implementationsIds list if it doesn't exist
+    bool implementationExists = implementationById[implementationId] !=
+      address(0);
+    if (!implementationExists) {
+      implementationsIds.push(implementationId);
+    }
+
+    // Set implementation
+    implementationById[implementationId] = implementationAddress;
+
+    // Validate implementation against existing conditions
+    validateConditions();
+  }
+```
+
+### Step 5: Add protocol specific conditions to the allow list
+
+Discover what transactions are possible from your website and add their corresponding conditions to the allow list by calling the `addConditions()` function
+
+```solidity
+/**
+   * @notice Add multiple conditions with validation
+   * @param _conditions The conditions to add
+   */
+  function addConditions(Condition[] memory _conditions) public onlyOwner {
+    for (
+      uint256 conditionIdx;
+      conditionIdx < _conditions.length;
+      conditionIdx++
+    ) {
+      Condition memory condition = _conditions[conditionIdx];
+      addCondition(condition);
+    }
+  }
+```
+
+### Step 6: Implement allow list validation in your protocol sdk/website
+
+Before your protocol’s website attempts to make calls on chain, make sure you load in the user’s transaction into the [validateCalldataByOrigin()](https://github.com/yearn/eth-allowlist/blob/fcb2c52439a3311cc7b95985387ccd29d734ede7/contracts/Registry.sol#L129C2-L148C2) function and validate this transaction is possible.
+
+```solidity
+/**
+   * @notice Determine whether or not a given target and calldata is valid
+   * @dev In order to be valid, target and calldata must pass the allowlist conditions tests
+   * @param targetAddress The target address of the method call
+   * @param data The raw calldata of the call
+   * @return isValid True if valid, false if not
+   */
+  function validateCalldataByOrigin(
+    string memory originName,
+    address targetAddress,
+    bytes calldata data
+  ) public view returns (bool isValid) {
+    address allowlistAddress = allowlistAddressByOriginName[originName];
+    isValid = CalldataValidation.validateCalldataByAllowlist(
+      allowlistAddress,
+      targetAddress,
+      data
+    );
+  }
+}
+```
+
+See [Yearn Vault’s SDK implementation](https://github.com/yearn/yearn-sdk/blob/546e58381b4c86648eeeabcf929285c5c7110282/src/services/allowlist.ts#L37) of the allow list validation
+
+### Conclusion
+
+After following all the above steps you will now have additional features that can help aid in protecting your users from MITM attacks and DNS spoofing attacks. The intention of the Metamask team is to implement the calldata validation for Dapps who have an allowList implemented.
+
+### Important things to Note
+
+- The MM team is working on proposing this solution. New AllowList contracts may be deployed in order to support extended functionalities.
+- All of the steps mentioned above can be seen in the [test](./test/) files.
