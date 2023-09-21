@@ -177,35 +177,6 @@ Discover what transactions are possible from your website and add their correspo
   }
 ```
 
-### Step 6: Implement allow list validation in your protocol sdk/website
-
-Before your protocol’s website attempts to make calls on chain, make sure you load in the user’s transaction into the [validateCalldataByOrigin()](https://github.com/yearn/eth-allowlist/blob/fcb2c52439a3311cc7b95985387ccd29d734ede7/contracts/Registry.sol#L129C2-L148C2) function and validate this transaction is possible.
-
-```solidity
-/**
-   * @notice Determine whether or not a given target and calldata is valid
-   * @dev In order to be valid, target and calldata must pass the allowlist conditions tests
-   * @param targetAddress The target address of the method call
-   * @param data The raw calldata of the call
-   * @return isValid True if valid, false if not
-   */
-  function validateCalldataByOrigin(
-    string memory originName,
-    address targetAddress,
-    bytes calldata data
-  ) public view returns (bool isValid) {
-    address allowlistAddress = allowlistAddressByOriginName[originName];
-    isValid = CalldataValidation.validateCalldataByAllowlist(
-      allowlistAddress,
-      targetAddress,
-      data
-    );
-  }
-}
-```
-
-See [Yearn Vault’s SDK implementation](https://github.com/yearn/yearn-sdk/blob/546e58381b4c86648eeeabcf929285c5c7110282/src/services/allowlist.ts#L37) of the allow list validation
-
 ### Conclusion
 
 After following all the above steps you will now have additional features that can help aid in protecting your users from MITM attacks and DNS spoofing attacks. The intention of the Metamask team is to implement the calldata validation for Dapps who have an allowList implemented.
