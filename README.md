@@ -210,6 +210,13 @@ See [Yearn Vault’s SDK implementation](https://github.com/yearn/yearn-sdk/blob
 
 After following all the above steps you will now have additional features that can help aid in protecting your users from MITM attacks and DNS spoofing attacks. The intention of the Metamask team is to implement the calldata validation for Dapps who have an allowList implemented.
 
+### Supporting Resources
+
+1. [Understanding the benefits of DNSSEC](https://easydns.com/dns/dnssec/)
+2. [Eth allow list created by the yearn team](https://github.com/yearn/eth-allowlist)
+3. [Yearn-sdk allow list implementation](https://github.com/yearn/yearn-sdk/blob/546e58381b4c86648eeeabcf929285c5c7110282/src/services/allowlist.ts)
+4. [Array manipulation help](https://ethereum.stackexchange.com/questions/130480/why-am-i-getting-index-out-of-bounds-here)
+
 ### Important things to Note
 
 - The MM team is working on proposing this solution. New AllowList contracts may be deployed in order to support extended functionalities.
